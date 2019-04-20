@@ -1,102 +1,107 @@
 syntax = "proto2";
+
 /*
-*UPS uses the request to create a world.
-*/
+ * UPS uses the request to create a world.
+ */
 message InitWorld{
-required int64 worldid = 1;
-required int64 seqnum=2;
-}
- /*
-* Because Amazon need to pass wh_id and its address to UPS
-*/
-message WarehouseInfo{
-required int32 whid = 1;
-required int32 wh_x = 2;
-required int32 wh_y = 3;
-}
-/*
-*Amazon uses the message to notify UPS the warehouseIDs of warehouses.
-*/
-message DetermineWarehouse{
-repeated int32 warehouse = 1;(delete)
-repeated WarehouseInfo warehouses=1;
-required int64 seqnum = 2;
-}
- 
-/*
-*UPS uses the message to notify Amazon
-*which trucks are assigned to corresponding warehouses within the same order.
-*/
-message DetermineTruck{
-repeated TruckLocation arrivedtrucks = 1;
-required int64 seqnum = 2;
-}
- 
-/*
-*This message is used to build relationship between
-*the assigned truck and corresponding warehouse.
-*/
-message TruckLocation{
-required int32 truckid = 1;
-required int32 whid = 2;
-}
- 
-/*
-*Amazon uses the message to notify UPS the destinations of the packages.
-*/
-message DetermineDst{
-repeated TruckDst leavingtrucks = 1;
-required int64 seqnum = 2;
-}
- 
-/*
-*This message is used to build relationships
-*among package, package destination and truck used to deliver it.
-*/
-message TruckDst{
-required int32 truckid = 1;
-required int32 x = 2;
-required int32 y = 3;
-required int64 shipid = 4;
-}
- 
-/*
-*UPS uses the message to notify Amazon the information about the package after shipped.
-*/
-message SettleShipment{
-repeated PackageInfo packages = 1;
-required int64 seqnum = 2;
-}
- 
-/*
-*This message represents the information about packages.
-*/
-message PackageInfo{
-required int64 packageid = 1;
-required string description = 2;
-required int32 count = 3;
-required int64 shipid = 4;
-}
- /*
-* This is UPS to amazon, the other side is vice versa
-*/
-message UCommands{
-repeated InitWorld worlds = 1;
-repeated DetermineTruck trucks = 2;
-repeated SettleShipment shipments= 3;
-}
- /*
-* This is amazon to UPS, the other side is vice versa
-*/
-message ACommands{
-repeated DetermineWarehouse warehouses = 1;
-repeated DetermineDst dests = 2;
-}/*
-*This message is used for acknowledgement.
-*/
-message Response{
-required int64 seqnum = 1;(delete)
-Required bool succeed = 1;
-required int64 seqnum = 2;
+    required int64 worldid = 1;
+    required int64 seqnum = 2;
 }
 
+/*
+ * Because Amazon need to pass whid and its address to UPS
+ */
+message WarehouseInfo{
+    required int32 whid = 1;
+    required int32 wh_x = 2;
+    required int32 wh_y = 3;
+}
+
+/*
+ * Amazon uses the message to notify UPS the info of warehouses.
+ */
+message DetermineWarehouse{
+    repeated WarehouseInfo warehouses=1;
+    required int64 seqnum = 2;
+}
+ 
+/*
+ * UPS uses the message to notify Amazon which trucks
+ * are assigned to corresponding warehouses within the same order.
+ */
+message DetermineTruck{
+    repeated TruckLocation arrivedtrucks = 1;
+    required int64 seqnum = 2;
+}
+
+/*
+ * This message is used to build relationship between
+ * the assigned truck and corresponding warehouse.
+ */
+message TruckLocation{
+    required int32 truckid = 1;
+    required int32 whid = 2;
+}
+
+/*
+ * Amazon uses the message to notify UPS the destinations of the packages.
+ */
+message DetermineDst{
+    repeated TruckDst leavingtrucks = 1;
+    required int64 seqnum = 2;
+}
+
+/*
+ * This message is used to build relationships
+ * among package, package destination and truck used to deliver it.
+ */
+message TruckDst{
+    required int32 truckid = 1;
+    required int32 x = 2;
+    required int32 y = 3;
+    required int64 shipid = 4;
+}
+
+/*
+ * UPS uses the message to notify Amazon
+ * the information about the package after shipped.
+ */
+message SettleShipment{
+    repeated PackageInfo packages = 1;
+    required int64 seqnum = 2;
+}
+
+/*
+ * This message represents the information about packages.
+ */
+message PackageInfo{
+    required int64 packageid = 1;
+    required string description = 2;
+    required int32 count = 3;
+    required int64 shipid = 4;
+}
+
+/*
+ * This is UPS to amazon, the other side is vice versa
+ */
+message UACommands{
+    repeated InitWorld worlds = 1;
+    repeated DetermineTruck trucks = 2;
+    repeated SettleShipment shipments= 3;
+}
+
+/*
+ * This is amazon to UPS, the other side is vice versa
+ */
+message AUCommands{
+    repeated DetermineWarehouse warehouses = 1;
+    repeated DetermineDst dests = 2;
+}
+
+/*
+ * This message is used for acknowledgement.
+ */
+message Response{
+    required bool succeed = 1;
+    required int64 seqnum = 2;
+}
