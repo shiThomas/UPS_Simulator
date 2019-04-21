@@ -63,9 +63,14 @@ def connect_world(world_socket, world_id):
     if world_id:
         u_connect.worldid = int(world_id)
     u_connect.isAmazon = False
-    send_msg(world_socket, u_connect.SerializeToString())
-    # print(u_connect.SerializeToString())
-        
+    send_msg(world_socket, u_connect)
+
+    response = recv_msg(world_socket)
+    u_connected = world_ups_pb2.UConnected()
+    u_connected.ParseFromString(response)
+
+    return u_connected.worldid, u_connected.result
+    
 # Connect Amazon
 def connect_amazon():
     amazon_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -81,25 +86,24 @@ def connect_amazon():
 
 # Send with encoded length info
 def send_msg(s, msg):
-    _EncodeVarint(s.send, len(msg), None)
-    s.send(msg)
+    hdr = []
+    _EncodeVarint(hdr.append, len(msg.SerializeToString()), None)
+    s.sendall(b"".join(hdr)) 
+    s.sendall(msg.SerializeToString())
 
 # Recv with encoded length info
 def recv_msg(s):
     var_int_buff = []
-    """
     while True:
-        buf = s.recv(1)
-        var_int_buff += buf
-        msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
-        if new_pos != 0:
-            break
-    """
-    whole_message = s.recv(1024)
-    print(whole_message)
-    u_connect = world_ups_pb2.UConnect()
-    u_connect.ParseFromString(whole_message)
-    print(u_connect)
+        try:
+            buf = s.recv(1)
+            var_int_buff += buf
+            msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
+            if new_pos != 0:
+                break
+        except IndexError:
+            pass
+    whole_message = s.recv(msg_len)
     return whole_message
 
 # while True:
@@ -115,28 +119,20 @@ def main():
 
     world_id = input("Enter world id to connect or just hit enter to create a new one: ")
 
-    if world_id and not world_id.isdisit():
-        print("The world id should be digits.")
+    if world_id and not world_id.isdigit():
+        print("Error: world id should be digits.")
         return
 
     # Connect to World
     world_socket = connect_world_server()
     
-    connect_world(world_socket, world_id)
-
-    response = recv_msg(world_socket)
-
-    u_connect = world_ups_pb2.UConnect()
-    u_connect.ParseFromString(response)
-    print(u_connect)
-
+    world_id, result = connect_world(world_socket, world_id)
+    
+    print(world_id, result)
+    
     # Connect to database
     dbconn = connect_db()
     cur = dbconn.cursor()
-
-    cur.execute('SELECT version()')
-    db_version = cur.fetchone()
-    print('db_version is:\n', db_version)
 
     cur.close()
     dbconn.close()
