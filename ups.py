@@ -10,7 +10,7 @@ import build_commands
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
-WORLD_HOST = 'vcm-9448.vm.duke.edu'
+WORLD_HOST = 'vcm-9229.vm.duke.edu'
 WORLD_PORT = 12345
 AMAZON_HOST = ''
 AMAZON_POST = ''
@@ -59,13 +59,20 @@ def connect_world_server():
             continue
 
 # Connect to World or create a new World
-def connect_world(world_socket, worldid):
+def connect_world(world_socket, world_id,num_truck_init):
     u_connect = world_ups_pb2.UConnect()
-    if worldid:
-        u_connect.worldid = int(worldid)
     u_connect.isAmazon = False
-    send_msg(world_socket, u_connect)
-
+    if world_id:
+        u_connect.worldid = int(world_id)
+        send_msg(world_socket, u_connect)
+    else:
+        for i in range(0,num_truck_init):
+            trucks = u_connect.trucks.add()
+            trucks.id = i
+            trucks.x = 0
+            trucks.y = 0
+        send_msg(world_socket, u_connect)
+        
     response = recv_msg(world_socket)
     u_connected = world_ups_pb2.UConnected()
     u_connected.ParseFromString(response)
@@ -117,26 +124,20 @@ def recv_msg(s):
 
 def main():
     print('main() begins...')
-
-    worldid = input("Enter world id to connect or just hit enter to create a new one: ")
-
-    if worldid and not worldid.isdigit():
+    
+    world_id = input("Enter world id to connect or just hit enter to create a new one: ")
+    num_truck_init = 100
+    if world_id and not world_id.isdigit():
         print("Error: world id should be digits.")
         return
-
-    # Connect to World Server
-    world_socket = connect_world_server()
-
-    # Connect to world
-    worldid, result = connect_world(world_socket, worldid)
-    if result != 'connected!':
-        print(result)
-        return
-    print(worldid, result)
-
-    # Connect to Amazon
-    amazon_socket = connect_amazon()
+     # Connect to World
     
+    world_socket = connect_world_server()
+    
+    world_id, result = connect_world(world_socket, world_id, num_truck_init)
+    
+    print(world_id, result)
+
     # Connect to database
     dbconn = connect_db()
     cur = dbconn.cursor()
