@@ -5,7 +5,8 @@ import psycopg2
 from google.protobuf.internal.decoder import _DecodeVarint32
 from google.protobuf.internal.encoder import _EncodeVarint
 from proto import world_ups_pb2
-
+from proto import ups_amazon_pb2
+import build_commands
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
@@ -33,8 +34,8 @@ def connect_db():
         try:
             dbconn = psycopg2.connect(
                 database = 'wgzyjrdk',
-                user='wgzyjrdk',
-                password='NdCR_HW8uL-E-id_IUpNrn_cLNqEt593',
+                user = 'wgzyjrdk',
+                password = 'NdCR_HW8uL-E-id_IUpNrn_cLNqEt593',
                 host = 'isilo.db.elephantsql.com',
                 port = '5432')
             # cur = dbconn.cursor()
@@ -51,17 +52,17 @@ def connect_world_server():
     while True:
         try:
             world_socket.connect((WORLD_HOST, WORLD_PORT))
-            print('Successfully connected to World')
+            print('Successfully connected to World Server')
             return world_socket
         except:
-            print('Unable to connect to World')
+            print('Unable to connect to World Server')
             continue
 
 # Connect to World or create a new World
-def connect_world(world_socket, world_id):
+def connect_world(world_socket, worldid):
     u_connect = world_ups_pb2.UConnect()
-    if world_id:
-        u_connect.worldid = int(world_id)
+    if worldid:
+        u_connect.worldid = int(worldid)
     u_connect.isAmazon = False
     send_msg(world_socket, u_connect)
 
@@ -117,23 +118,30 @@ def recv_msg(s):
 def main():
     print('main() begins...')
 
-    world_id = input("Enter world id to connect or just hit enter to create a new one: ")
+    worldid = input("Enter world id to connect or just hit enter to create a new one: ")
 
-    if world_id and not world_id.isdigit():
+    if worldid and not worldid.isdigit():
         print("Error: world id should be digits.")
         return
 
-    # Connect to World
+    # Connect to World Server
     world_socket = connect_world_server()
-    
-    world_id, result = connect_world(world_socket, world_id)
-    
-    print(world_id, result)
+
+    # Connect to world
+    worldid, result = connect_world(world_socket, worldid)
+    if result != 'connected!':
+        print(result)
+        return
+    print(worldid, result)
+
+    # Connect to Amazon
+    amazon_socket = connect_amazon()
     
     # Connect to database
     dbconn = connect_db()
     cur = dbconn.cursor()
 
+    world_socket.close()
     cur.close()
     dbconn.close()
     
