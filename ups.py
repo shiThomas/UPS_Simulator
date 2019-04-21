@@ -10,10 +10,12 @@ import build_commands
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
-WORLD_HOST = 'vcm-9229.vm.duke.edu'
+WORLD_HOST = 'vcm-9448.vm.duke.edu'
 WORLD_PORT = 12345
 AMAZON_HOST = ''
 AMAZON_POST = ''
+
+SEQNUM = 0;
 
 # To do list:
 # 0. connect to Database.
@@ -59,14 +61,14 @@ def connect_world_server():
             continue
 
 # Connect to World or create a new World
-def connect_world(world_socket, world_id,num_truck_init):
+def connect_world(world_socket, worldid, num_truck_init):
     u_connect = world_ups_pb2.UConnect()
     u_connect.isAmazon = False
     if world_id:
-        u_connect.worldid = int(world_id)
+        u_connect.worldid = int(worldid)
         send_msg(world_socket, u_connect)
     else:
-        for i in range(0,num_truck_init):
+        for i in range(0, num_truck_init):
             trucks = u_connect.trucks.add()
             trucks.id = i
             trucks.x = 0
@@ -125,19 +127,27 @@ def recv_msg(s):
 def main():
     print('main() begins...')
     
-    world_id = input("Enter world id to connect or just hit enter to create a new one: ")
+    worldid = input("Enter world id to connect or just hit enter to create a new one: ")
     num_truck_init = 100
-    if world_id and not world_id.isdigit():
+    if worldid and not worldid.isdigit():
         print("Error: world id should be digits.")
         return
-     # Connect to World
     
+    # Connect to World Server
     world_socket = connect_world_server()
-    
-    world_id, result = connect_world(world_socket, world_id, num_truck_init)
-    
-    print(world_id, result)
 
+    # Connect to world
+    worldid, result = connect_world(world_socket, worldid, num_truck_init)
+    print(worldid, result)
+
+    # Conenct to Amazon
+    amazon_socket = connect_amazon()
+    init_world = ups_amazon_pb2.InitWorld()
+    init_world.worldid = worldid
+    init_world.seqnum = SEQNUM
+    SEQNUM += 1
+    send_msg(amazon_socket, init_world)
+    
     # Connect to database
     dbconn = connect_db()
     cur = dbconn.cursor()
