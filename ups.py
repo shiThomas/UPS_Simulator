@@ -61,7 +61,7 @@ def connect_world_server():
 def connect_world(world_socket, world_id):
     u_connect = world_ups_pb2.UConnect()
     if world_id:
-        u_connect.worldid = world_id
+        u_connect.worldid = int(world_id)
     u_connect.isAmazon = False
     send_msg(world_socket, u_connect.SerializeToString())
     # print(u_connect.SerializeToString())
@@ -87,14 +87,20 @@ def send_msg(s, msg):
 # Recv with encoded length info
 def recv_msg(s):
     var_int_buff = []
+    """
     while True:
         buf = s.recv(1)
         var_int_buff += buf
         msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
         if new_pos != 0:
             break
-        whole_message = world_socket.recv(msg_len)
-        return whole_message
+    """
+    whole_message = s.recv(1024)
+    print(whole_message)
+    u_connect = world_ups_pb2.UConnect()
+    u_connect.ParseFromString(whole_message)
+    print(u_connect)
+    return whole_message
 
 # while True:
 
@@ -107,7 +113,11 @@ def recv_msg(s):
 def main():
     print('main() begins...')
 
-    world_id = int(input("Enter world id to connect or just hit enter to create a new one: "))
+    world_id = input("Enter world id to connect or just hit enter to create a new one: ")
+
+    if world_id and not world_id.isdisit():
+        print("The world id should be digits.")
+        return
 
     # Connect to World
     world_socket = connect_world_server()
@@ -115,7 +125,10 @@ def main():
     connect_world(world_socket, world_id)
 
     response = recv_msg(world_socket)
-    print(response)
+
+    u_connect = world_ups_pb2.UConnect()
+    u_connect.ParseFromString(response)
+    print(u_connect)
 
     # Connect to database
     dbconn = connect_db()
