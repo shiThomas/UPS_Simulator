@@ -1,5 +1,7 @@
 import time
 from ups import *
+from build_commands import *
+from build_ups_amazon_commands import *
 
 # Handle gopickups by evaluating commands from amazon
 def execute_gopickups(amazon_socket, world_socket, warehouse, a_seq, w_seq):
@@ -25,7 +27,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, a_seq, w_seq):
         y = package.y
 
         # select an idle truck for picking up
-        dbcursor.execute("select * from Trucks where truck_status = '"+str(1)+"'")
+        dbcursor.execute("SELECT * FROM Truck WHERE truck_status = 1")
         truck = dbcursor.fetchall()[0]
             
         #add package_id, owner, package_status x, y to databse
@@ -38,6 +40,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, a_seq, w_seq):
         dbcursor.execute("update Truck set track_status = '"+str(2)+"' where truck_id ='"+str(truck.truck_id)+"')")
         truckid = truck.truck_id
 
+    truckid = 10
     world_commands = world_ups_pb2.UCommands()
     add_pickups(world_commands, truckid, warehouse_id, w_seq)
 

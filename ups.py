@@ -210,12 +210,14 @@ def main():
     
     # Conenct to Amazon
     amazon_socket = connect_amazon()
-    init_world = ups_amazon_pb2.InitWorld()
+    ua_commands = ups_amazon_pb2.UACommands()
+    init_world = ua_commands.worlds.add()
     init_world.worldid = worldid
     # init_world.seqnum = amazon_seqnum
     # amazon_seqnum += 1
     init_world.seqnum = 1
-    send_msg(amazon_socket, init_world)
+    print('init_world:\n', init_world)
+    send_msg(amazon_socket, ua_commands)
 
     """
     response = recv_msg(amazon_socket)
