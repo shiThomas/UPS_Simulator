@@ -12,10 +12,10 @@ import threading
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
-WORLD_HOST = 'vcm-9448.vm.duke.edu'
+WORLD_HOST = 'vcm-9229.vm.duke.edu'
 WORLD_PORT = 12345
-AMAZON_HOST = ''
-AMAZON_POST = ''
+AMAZON_HOST = 'vcm-8186.vm.duke.edu'
+AMAZON_POST = 12345
 
 SEQNUM = 0;
 NUM_TRUCK_INIT = 100
