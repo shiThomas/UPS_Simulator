@@ -184,7 +184,7 @@ def main():
                         print('Handle truckstatus')
                     for error in u_responses.error:
                         print('Handle error')
-                    # Do something...
+                    # Do something...wwwwww
                 else:
                     # fds is amazon_socket
                     # Read from amazon_socket
