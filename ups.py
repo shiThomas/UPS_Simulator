@@ -8,6 +8,7 @@ from proto import world_ups_pb2
 from proto import ups_amazon_pb2
 import build_commands
 import ups_amazon_commands
+import threading
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
@@ -17,6 +18,7 @@ AMAZON_HOST = ''
 AMAZON_POST = ''
 
 SEQNUM = 0;
+NUM_TRUCK_INIT = 100
 
 # To do list:
 # 0. connect to Database.
@@ -131,6 +133,25 @@ def recv_msg(s):
     whole_message = s.recv(msg_len)
     return whole_message
 
+# Handle messages from world
+def handle_world(world_socket):
+    # Read from world_socket
+    u_response = recv_world(world_socket)
+    for completion in u_responses.completions:
+        handle_completion(completion)
+        print('Handle completions')
+        t = threading.Thread(target=f())
+        t.start
+    for delivered in u_responses.delivered:
+        print('Handle delivered')
+    for ack in u_responses.acks:
+        print('Handle acks')
+    for truckstatus in u_responses.truckstatus:
+        print('Handle truckstatus')
+    for error in u_responses.error:
+        print('Handle error')
+    # Do something...
+
 # while True:
 
 #     incoming = channel.recv( 100 )
@@ -143,7 +164,6 @@ def main():
     print('main() begins...')
     
     worldid = input("Enter world id to connect or just hit enter to create a new one: ")
-    num_truck_init = 100
     if worldid and not worldid.isdigit():
         print("Error: world id should be digits.")
         return
@@ -152,7 +172,7 @@ def main():
     world_socket = connect_world_server()
 
     # Connect to world
-    worldid, result = connect_world(world_socket, worldid, num_truck_init)
+    worldid, result = connect_world(world_socket, worldid, NUM_TRUCK_INIT)
     if result != 'connected!':
         print(result)
         return
@@ -166,6 +186,14 @@ def main():
     SEQNUM += 1
     send_msg(amazon_socket, init_world)
 
+    response = recv_msg(amazon_socket)
+    au_commands = ups_amazon_pb2.AUCommands();
+    au_commands.ParseFromString(response)
+    for ack in au_commands.acks:
+        if ack == init_world.seqnum:
+            break
+
+    # Repeatedly read from world or amazon
     inputs = [world_socket, amazon_socket]
     while True:
         infds, outfds, errfds = select.select(inputs, [], [])
@@ -175,7 +203,10 @@ def main():
                     # Read from world_socket
                     u_responses = recv_world(world_socket)
                     for completion in u_responses.completions:
+                        # handle_completions()
                         print('Handle completions')
+                        t = threading.Thread(target=f())
+                        t.start
                     for delivered in u_responses.delivered:
                         print('Handle delivered')
                     for ack in u_responses.acks:
@@ -189,6 +220,12 @@ def main():
                     # fds is amazon_socket
                     # Read from amazon_socket
                     au_commands = recv_amazon(world_socket)
+                    for warehouse in au_commands.warehouses:
+                        execute_gopickups(amazon_socket, world_socket, warehouse)
+                    for dest in au_commands.dests:
+                        execute_godelivery(amazon_socket, world_socket, dest)
+                    for ack in au_commands.acks:
+                        print('Handle acks')
                     # Do something...
     
     # Connect to database
