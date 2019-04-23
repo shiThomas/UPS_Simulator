@@ -5,7 +5,7 @@ def add_pickups(commands, truckid, whid, seqnum):
     pickup.seqnum = seqnum
     return commands
 
-def add_deliveries(command, truckid, packageid, x, y, seqnum):
+def add_deliveries(commands, truckid, packageid, x, y, seqnum):
     deliver = commands.deliveries.add()
     deliver.truckid = truckid
     package = deliver.packages.add()
