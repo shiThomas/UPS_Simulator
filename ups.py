@@ -19,6 +19,17 @@ WORLD_PORT = 12345
 AMAZON_HOST = 'vcm-9448.vm.duke.edu'
 AMAZON_PORT = 12345
 
+idle = 1
+traveling = 2
+arrive_warehouse = 3
+loading = 4
+loaded = 5
+delivering = 6
+
+prepare_for_delivery = 0
+in_transit = 1
+delivered = 2
+
 ack_set = set()
 # ack_set.add(x)
 # ack_set.remove(x)
@@ -26,6 +37,9 @@ ack_set = set()
 sleep_time = 5
 
 dbcursor = 0
+
+world_socket = None
+amazon_socket = None
 
 world_seqnum = 0
 amazon_seqnum = 0
@@ -143,56 +157,95 @@ def recv_msg(s):
     whole_message = s.recv(msg_len)
     return whole_message
 
+# Reply ack to Amazon
+def return_ack_to_amazon(seqnum):
+    ua_commands = ups_amazon_pb2.UACommands()
+    ua_commands.ack[:] = [seqnum]  
+    send_msg(amazon_socket, ua_commands)
+
+# Reply ack to world(seqnum):
+def return_ack_to_world(seqnum):
+    u_commands = world_ups_pb2.UCommands()
+    u_commands.adks[:] = [seqnum]
+    send_msg(world_socket, u_commands)
+    
 # Handle messages from world
 def handle_world(amazon_socket, world_socket):
+    global ack_set
+    global amazon_seqnum
+    global world_seqnum
+    
     # Read from world_socket
-    u_response = recv_world(world_socket)
+    u_responses = recv_world(world_socket)
+    completion_size = len(u_responses.completions)
     for completion in u_responses.completions:
-        t = threading.Thread(target = handle_completion(amazon_socket, world_socket, completion))
+        t = threading.Thread(
+            target = handle_completion,
+            args = (amazon_socket, world_socket, completion, amazon_seqnum))
+        amazon_seqnum += completion_size
         t.start()
     for delivered in u_responses.delivered:
-        t = threading.Thread(target = handle_delivered(amazon_socket, world_socket, delivered))
+        t = threading.Thread(
+            target = handle_delivered,
+            args = (amazon_socket, world_socket, delivered))
         t.start()
     for ack in u_responses.acks:
+        print('Received ack from world:', ack)
         ack_set.add(ack)
     for truckstatus in u_responses.truckstatus:
-        t = threading.Thread(target = handle_truckstatus(amazon_socket, world_socket, truckstatus))
+        t = threading.Thread(
+            target = handle_truckstatus,
+            args = (amazon_socket, world_socket, truckstatus))
         t.start()
     for error in u_responses.error:
-        t = threading.Thread(target = handle_error(amazon_socket, world_socket, error))
+        t = threading.Thread(
+           target = handle_error,
+           args = (amazon_socket, world_socket, error))
         t.start()
 
 # Handle messages from amazon
 def handle_amazon(amazon_socket, world_socket):
+    global amazon_seqnum
+    global world_seqnum
+    
     # Read from amazon_socket
     au_commands = recv_amazon(amazon_socket)
     print(au_commands)
     for warehouse in au_commands.warehouses:
-        print('Handle warehouse')
-        global amazon_seqnum
-        global world_seqnum
-        t = threading.Thread(target = execute_gopickups(amazon_socket, world_socket, warehouse, amazon_seqnum, world_seqnum))
-        amazon_seqnum += 1
+        t = threading.Thread(target = execute_gopickups, args = (amazon_socket, world_socket, warehouse, world_seqnum))
         world_seqnum += 1
         t.start()
     for dest in au_commands.dests:
-        t = threading.Thread(execute_godelivery(amazon_socket, world_socket, dest))
+        t = threading.Thread(target = execute_godelivery, args = (amazon_socket, world_socket, dest))
         t.start()
-    for ack in au_commands.acks:
+    for ack in au_commands.ack:
         print('Handle acks')
-    # Do something...
 
-# while True:
+# Send world id to Amazon
+def send_Amazon_worldid(worldid, seqnum):
+    ua_commands = ups_amazon_pb2.UACommands()
+    init_world = ua_commands.worlds.add()
+    init_world.worldid = worldid
+    init_world.seqnum = seqnum
+    print('init_world:\n', init_world)
+    send_msg(amazon_socket, ua_commands)
 
-#     incoming = channel.recv( 100 )
-
-#     if incoming: 
-#         print "Received >%s<" % incoming
-#         incoming = ''
-
-def main():
-    print('main() begins...')
+    """
+    response = recv_msg(amazon_socket)
+    au_commands = ups_amazon_pb2.AUCommands();
+    au_commands.ParseFromString(response)
+    for ack in au_commands.ack:
+        if ack == seqnum:
+            break
+    """
     
+def main():
+    global amazon_socket
+    global world_socket
+    global amazon_seqnum
+    global world_seqnum
+    
+    # Get world id from user input
     worldid = input("Enter world id to connect or just hit enter to create a new one: ")
     if worldid and not worldid.isdigit():
         print("Error: world id should be digits.")
@@ -210,43 +263,27 @@ def main():
     
     # Conenct to Amazon
     amazon_socket = connect_amazon()
-    ua_commands = ups_amazon_pb2.UACommands()
-    init_world = ua_commands.worlds.add()
-    init_world.worldid = worldid
-    # init_world.seqnum = amazon_seqnum
-    # amazon_seqnum += 1
-    init_world.seqnum = 1
-    print('init_world:\n', init_world)
-    send_msg(amazon_socket, ua_commands)
-
-    """
-    response = recv_msg(amazon_socket)
-    au_commands = ups_amazon_pb2.AUCommands();
-    au_commands.ParseFromString(response)
-    for ack in au_commands.acks:
-        if ack == init_world.seqnum:
-            break
-    """
+    send_Amazon_worldid(worldid, amazon_seqnum)
+    amazon_seqnum += 1
     
     # Repeatedly read from world or amazon
     inputs = [world_socket, amazon_socket]
     while True:
+        print('Before select')
         infds, outfds, errfds = select.select(inputs, [], [])
+        print('len(infds):', len(infds))
         if len(infds) != 0:
             for fds in infds:
                 if fds is world_socket:
+                    print('Received message from world')
                     handle_world(amazon_socket, world_socket)
                 else:
                     print('Received message from Amazon')
                     handle_amazon(amazon_socket, world_socket)
-    
-    # Connect to database
-    dbconn = connect_db()
-    dbcursor = dbconn.cursor()
+        print('After select')
 
     world_socket.close()
-    cur.close()
-    dbconn.close()
+    amazon_socket.close()
     
 if __name__ == "__main__":
     main()

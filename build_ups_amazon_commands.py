@@ -4,11 +4,13 @@ def add_worlds(commands, worldid, seqnum):
     world.seqnum = seqnum
     return commands
 
-def add_trucks(commands, truckid, whid, seqnum):
+def add_trucks(commands, truckid, x, y, packageid, seqnum):
     truck = commands.trucks.add()
     location = truck.arrivedtrucks.add()
     location.truckid = truckid
-    location.whid = whid
+    location.wh_x = x
+    location.wh_y = y
+    location.packageid = packageid
     truck.seqnum = seqnum
     return commands
 
