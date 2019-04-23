@@ -48,14 +48,13 @@ def handle_completion(amazon_socket, world_socket, completion, a_seq):
     dbcursor.close()
     dbconn.close()
     
-def handle_delivered(amazon_socket, world_socket, delivered,a_seq):
+def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     #Reply ack to world
     return_ack_to_world(delivered.seqnum)
 
     #Receive data from delivered
     truckid = delivered.truckid
-    packageid = delivered.packageid
-    
+    packageid = delivered.packageid    
     
     #update package status to delivered
     dbconn = connect_db()
@@ -65,16 +64,12 @@ def handle_delivered(amazon_socket, world_socket, delivered,a_seq):
                      "where package_id ='"+str(packageid)+"'")
 
     ua_commands = ups_amazon_pb2.UACommands()
-    add_settled(ua_commands,packageid,a_seq)
-    a_seq+=1
-    send_msg(amazon_socket,ua_commands)
+    add_finished(ua_commands, packageid, a_seq)
+    send_msg(amazon_socket, ua_commands)
 
     dbconn.commit()
     dbcursor.close()
     dbconn.close()
-    
-    
-    
     
 def handle_truckstatus(amazon_socket, world_socket, truckstatus):
     #Reply ack to world

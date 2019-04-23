@@ -189,7 +189,8 @@ def handle_world(amazon_socket, world_socket):
     for delivered in u_responses.delivered:
         t = threading.Thread(
             target = handle_delivered,
-            args = (amazon_socket, world_socket, delivered))
+            args = (amazon_socket, world_socket, delivered, amazon_seqnum))
+        amazon_seqnum += 1
         t.start()
     for ack in u_responses.acks:
         print('Received ack from world:', ack)
@@ -212,14 +213,20 @@ def handle_amazon(amazon_socket, world_socket):
     
     # Read from amazon_socket
     au_commands = recv_amazon(amazon_socket)
+    # dest_size = len(au_commands.dests)
     print(au_commands)
     for warehouse in au_commands.warehouses:
         t = threading.Thread(target = execute_gopickups, args = (amazon_socket, world_socket, warehouse, world_seqnum))
         world_seqnum += 1
         t.start()
+
     for dest in au_commands.dests:
-        t = threading.Thread(target = execute_godelivery, args = (amazon_socket, world_socket, dest))
+        truck_size = len(dest.leavingtrucks)
+        t = threading.Thread(target = execute_godelivery, args = (amazon_socket, world_socket, dest, world_seqnum, amazon_seqnum))
+        world_seqnum += truck_size
+        amazon_seqnum += truck_size
         t.start()
+
     for ack in au_commands.ack:
         print('Handle acks')
 
