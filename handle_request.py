@@ -1,47 +1,57 @@
-
-
-
-
-    
-
+import time
+from ups import *
+from build_commands import *
+from build_ups_amazon_commands import *
 
 # Handle gopickups by evaluating commands from amazon
-def execute_gopickups(amazon_socket,world_socket,commands):
-    #Not sure if we need to keep track of tracking number
-    trackingnum =[]
+def execute_gopickups(amazon_socket, world_socket, warehouse, a_seq, w_seq):
+    # Connect to database
+    dbconn = connect_db()
+    dbcursor = dbconn.cursor()
+    
+    # Not sure if we need to keep track of tracking number
+    trackingnum = []
 
-    dbcursor = db_conn.cursor()
-    for currpickup in commands.warehouses:
-        warehouse_id = currpickup.whid
-        wh_x =currpickup.wh_x
-        wh_y = currpickup.wh_y
-        
-        truckid = -1
-        for package in currpickup.packageinfos:
-            package_list.append(package.packageid)
-            package_id = package.packageid
-            owner  = package.upsaccount
-            x = package.x
-            y = package.y
+    # dbcursor = db_conn.cursor()
+    warehouse_id = warehouse.whid
+    wh_x = warehouse.wh_x
+    wh_y = warehouse.wh_y
+    
+    truckid = -1
+    # package_list = []
+    for package in warehouse.packageinfos:
+        package_id = package.packageid
+        # package_list.append(package_id)
+        owner  = package.upsaccount
+        x = package.x
+        y = package.y
 
-            #select a idle truck for picking up
-            dbcursor.execute("select * from Truck where truck_status = '"+str(1)+"')")
-            truck = dbcursor.fetchall()[0]
+        # select an idle truck for picking up
+        dbcursor.execute("SELECT * FROM Truck WHERE truck_status = 1")
+        truck = dbcursor.fetchall()[0]
             
-            #add package_id, owner, package_status x, y to databse
+        #add package_id, owner, package_status x, y to databse
             
-            dbcursor.execute("insert into Package (package_id,owner,package_status,x,y,truck) values ('"
+        dbcursor.execute("insert into Package (package_id,owner,package_status,x,y,truck) values ('"
                              +str(package_id)+"', '"+owner+"', '"+str(0)+"', '" +x+"', '"+y+"', '"+str(truck.id)+"')")
         
 
-            #change status of truck to en route to warehouse
-            dbcursor.execute("update Truck set track_status = '"+str(2)+"' where truck_id ='"+str(truck.truck_id)+"')")
-            truckid = truck.truck_id
+        #change status of truck to en route to warehouse
+        dbcursor.execute("update Truck set track_status = '"+str(2)+"' where truck_id ='"+str(truck.truck_id)+"')")
+        truckid = truck.truck_id
 
+    truckid = 10
+    world_commands = world_ups_pb2.UCommands()
+    add_pickups(world_commands, truckid, warehouse_id, w_seq)
 
-        add_pickups(output_command,truckid,warehouse_id)
-            #To do list:
-            #1. complete settleshipment response
+    while w_seq not in ack_set:
+        time.sleep(sleep_time)
+        send_msg(world_socket, world_commands)
+
+    ack_set.remove(w_seq)
+    
+    # To do list:
+    # 1. complete settleshipment response
            
 
 
