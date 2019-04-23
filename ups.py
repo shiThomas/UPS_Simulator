@@ -20,7 +20,6 @@ WORLD_PORT = 12345
 AMAZON_HOST = 'vcm-9448.vm.duke.edu'
 AMAZON_PORT = 12345
 
-
 idle = 1
 traveling = 2
 arrive_warehouse = 3
@@ -45,7 +44,7 @@ amazon_socket = None
 
 world_seqnum = 0
 amazon_seqnum = 0
-NUM_TRUCK_INIT = 100
+NUM_TRUCK_INIT = 1000
 
 # To do list:
 # 0. connect to Database.
@@ -91,6 +90,10 @@ def connect_world_server():
 
 # Connect to World or create a new World
 def connect_world(world_socket, worldid, num_truck_init):
+    # Connect to database
+    dbconn = connect_db()
+    dbcursor = dbconn.cursor()
+    
     u_connect = world_ups_pb2.UConnect()
     u_connect.isAmazon = False
     if worldid:
@@ -102,12 +105,23 @@ def connect_world(world_socket, worldid, num_truck_init):
             trucks.id = i
             trucks.x = 0
             trucks.y = 0
+
+            dbcursor.execute(
+                "insert into myapp_truck" +
+                "(truck_id, truck_status) " +
+                "values ('" +
+                str(i) + "', '" +
+                str(idle) + "')")
+
+        dbconn.commit()
         send_msg(world_socket, u_connect)
         
     response = recv_msg(world_socket)
     u_connected = world_ups_pb2.UConnected()
     u_connected.ParseFromString(response)
 
+    dbcursor.close()
+    dbconn.close()
     return u_connected.worldid, u_connected.result
 
 # Receive UResponses from world
