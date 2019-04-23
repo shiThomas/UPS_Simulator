@@ -44,7 +44,7 @@ amazon_socket = None
 
 world_seqnum = 0
 amazon_seqnum = 0
-NUM_TRUCK_INIT = 1000
+NUM_TRUCK_INIT = 100
 
 # To do list:
 # 0. connect to Database.
@@ -100,6 +100,9 @@ def connect_world(world_socket, worldid, num_truck_init):
         u_connect.worldid = int(worldid)
         send_msg(world_socket, u_connect)
     else:
+        dbcursor.execute("delete from myapp_truck")
+        dbcursor.execute("delete from myapp_package")
+        
         for i in range(0, num_truck_init):
             trucks = u_connect.trucks.add()
             trucks.id = i

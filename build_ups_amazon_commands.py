@@ -16,7 +16,7 @@ def add_trucks(commands, truckid, x, y, packageid, seqnum):
 
 def add_settled(commands, packageid, seqnum):
     settle = commands.settled.add()
-    settle.packageid = packageid
+    settle.packageid[:] = [packageid]
     settle.seqnum = seqnum
     return commands
 

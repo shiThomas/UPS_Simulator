@@ -75,9 +75,9 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
         print('Send UGopickup to world...')
         send_msg(world_socket, world_commands)
         time.sleep(sleep_time)
-    print('After receive ack from world')
+    print('UGopickup: After receive ack from world')
 
-    ack_set.remove(w_seq)
+    # ack_set.remove(w_seq)
 
     dbconn.commit()
     print('After commit')
@@ -89,6 +89,8 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
 #Before go delivery, receive msg from amz
 def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set):
+    print('In execute_godelivery')
+    
     #return ack number to amazon 
     return_ack_to_amazon(amazon_socket, dest.seqnum)
     
@@ -103,27 +105,32 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
         packageid = currtruck.packageid
         
         #need to add response command
-        dbcursor.execute("select destination_x,destination_y from package"+
-                             " where package_id = '"+str(packageid)+"'")
-        package = dbcursur.fetchall()[0]
+        print('packageid is:', packageid)
+        dbcursor.execute(
+            "select destination_x, destination_y " +
+            "from myapp_package " +
+            "where package_id = '" + str(packageid) + "'")
+        package = dbcursor.fetchall()[0]
         x = package[0]
         y = package[1]
             
         #output command to world 
         
-        delivery_location = world_commands.packages.add()
-        add_deliveries(delivery_location,truckid,packageid,x,y,w_seq)
+        # delivery_location = world_commands.packages.add()
+        add_deliveries(world_commands, truckid, packageid, x, y, w_seq)
             
         #To do list:
         #1. SQL command to implement modifying package and truck status    !!!may not be necessary
 
+        print('Send UGodelivery to world')
+        print(world_commands)
         while w_seq not in ack_set:
             print('Send UGopickup to world...')
             send_msg(world_socket, world_commands)
             time.sleep(sleep_time)
-            print('After receive ack from world')
+        print('UGodelivery: After receive ack from world')
     
-            ack_set.remove(w_seq)
+        # ack_set.remove(w_seq)
 
         
         w_seq += 1
