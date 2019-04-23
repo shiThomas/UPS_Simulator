@@ -88,28 +88,67 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq):
     # To do list:
     # 1. complete settleshipment response
 
-#Before go delivery, command:ufinished
-def execute_godelivery(amazon_socket,world_socket,commands):
-    for currdeliver in commands.dests:
-        for currtruck in currtruck.leavingtrucks:
-            truckid = currtruck.truckid
-            packageid = currtruck.packageid
+#Before go delivery, receive msg from amz
+def execute_godelivery(amazon_socket,world_socket,dest,w_seq,a_seq):
+    global ack_set
+    
+    #return ack number to amazon 
+    return_ack_to_amazon(dest.seqnum)
+    
+    for currtruck in dest.leavingtrucks:
+
+        dbconn = connect_db()
+        dbcursor = dbconn.cursor()
+
+        
+        world_commands = world_ups_pb2.UCommands()
+        truckid = currtruck.truckid
+        packageid = currtruck.packageid
+        
+        #need to add response command
+        dbcursor.execute("select destination_x,destination_y from package"+
+                             " where package_id = '"+str(packageid)+"'")
+        package = dbcursur.fetchall()[0]
+        x = package[0]
+        y = package[1]
             
-            #need to add response command
-            dbcursor.execute("select * from Package where package_id = '"+str(packageid)+"')")
-            package = dbcursur.fetchall()[0]
-            x = package.x
-            y = package.y
+        #output command to world 
+        
+        delivery_location = world_commands.packages.add()
+        add_deliveries(delivery_location,truckid,packageid,x,y,w_seq)
             
-            #output_command not defined 
-            
-            add_deliveries(output_command,truckid,packageid,x,y)
-            #To do list:
-            #1. SQL command to implement modifying package and truck status    !!!may not be necessary
-            
-            
+        #To do list:
+        #1. SQL command to implement modifying package and truck status    !!!may not be necessary
+
+        while w_seq not in ack_set:
+            print('Send UGopickup to world...')
+            send_msg(world_socket, world_commands)
+            time.sleep(sleep_time)
+            print('After receive ack from world')
+    
+            ack_set.remove(w_seq)
+
+        
+        w_seq += 1
+
+        dbcursor.execute(
+            "update myapp_truck set " +
+            "truck_status = " + str(delivering) +
+            "where truck_id = '" + str(truckid) + "'")
+
+        
+        #return settle msg to amazon
+        ua_commands = ups_amazon_pb2.UACommands()
+        add_settled(ua_commands,packageid,a_seq)
+        a_seq+=1
 
 
-#To do list
-#1. Deliverymade received, and respond to amz with a finish_shipment 
+        send_msg(amazon_socket,ua_commands)
+
+        
+        dbconn.commit()
+        print('After commit')
+        dbcursor.close()
+        dbconn.close()
+
 
