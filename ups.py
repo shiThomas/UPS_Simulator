@@ -17,8 +17,8 @@ from handle_request import *
 WORLD_HOST = 'vcm-9229.vm.duke.edu'
 WORLD_PORT = 12345
 
-AMAZON_HOST = 'vcm-8186.vm.duke.edu'
-AMAZON_POST = 12345
+AMAZON_HOST = 'vcm-9448.vm.duke.edu'
+AMAZON_PORT = 12345
 
 
 idle = 1
@@ -160,13 +160,13 @@ def recv_msg(s):
     return whole_message
 
 # Reply ack to Amazon
-def return_ack_to_amazon(seqnum):
+def return_ack_to_amazon(amazon_socket, seqnum):
     ua_commands = ups_amazon_pb2.UACommands()
     ua_commands.ack[:] = [seqnum]  
     send_msg(amazon_socket, ua_commands)
 
 # Reply ack to world(seqnum):
-def return_ack_to_world(seqnum):
+def return_ack_to_world(world_socket, seqnum):
     u_commands = world_ups_pb2.UCommands()
     u_commands.adks[:] = [seqnum]
     send_msg(world_socket, u_commands)
@@ -219,7 +219,6 @@ def handle_amazon(amazon_socket, world_socket):
         t = threading.Thread(target = execute_gopickups, args = (amazon_socket, world_socket, warehouse, world_seqnum))
         world_seqnum += 1
         t.start()
-
     for dest in au_commands.dests:
         truck_size = len(dest.leavingtrucks)
         t = threading.Thread(target = execute_godelivery, args = (amazon_socket, world_socket, dest, world_seqnum, amazon_seqnum))

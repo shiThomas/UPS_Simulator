@@ -6,7 +6,7 @@ from proto import ups_amazon_pb2
     
 def handle_completion(amazon_socket, world_socket, completion, a_seq):
     # Reply ack to world
-    return_ack_to_world(completion.seqnum)
+    return_ack_to_world(world_socket, completion.seqnum)
     
     # Connect to database
     dbconn = connect_db()
@@ -50,7 +50,7 @@ def handle_completion(amazon_socket, world_socket, completion, a_seq):
     
 def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     #Reply ack to world
-    return_ack_to_world(delivered.seqnum)
+    return_ack_to_world(world_socket, delivered.seqnum)
 
     #Receive data from delivered
     truckid = delivered.truckid
@@ -73,14 +73,14 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     
 def handle_truckstatus(amazon_socket, world_socket, truckstatus):
     #Reply ack to world
-    return_ack_to_world(delivered.seqnum)
+    return_ack_to_world(world_socket, delivered.seqnum)
 
     #print query msg
-    pritn(truckstatus)
+    print(truckstatus)
     
 def handle_error(amazon_socket, world_socket, error):
     #Reply ack to world
-    return_ack_to_world(delivered.seqnum)
+    return_ack_to_world(world_socket, delivered.seqnum)
 
     #print error msg
     print("ERROR: ",error)

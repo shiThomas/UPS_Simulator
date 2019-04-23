@@ -9,7 +9,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq):
     global ack_set
 
     # Reply ack to Amazon
-    return_ack_to_amazon(warehouse.seqnum)
+    return_ack_to_amazon(amazon_socket, warehouse.seqnum)
     
     # Connect to database
     dbconn = connect_db()
@@ -93,7 +93,7 @@ def execute_godelivery(amazon_socket,world_socket,dest,w_seq,a_seq):
     global ack_set
     
     #return ack number to amazon 
-    return_ack_to_amazon(dest.seqnum)
+    return_ack_to_amazon(amazon_socket, dest.seqnum)
     
     for currtruck in dest.leavingtrucks:
 
