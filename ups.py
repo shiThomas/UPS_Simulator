@@ -168,7 +168,7 @@ def return_ack_to_amazon(amazon_socket, seqnum):
 # Reply ack to world(seqnum):
 def return_ack_to_world(world_socket, seqnum):
     u_commands = world_ups_pb2.UCommands()
-    u_commands.adks[:] = [seqnum]
+    u_commands.acks[:] = [seqnum]
     send_msg(world_socket, u_commands)
     
 # Handle messages from world
@@ -216,12 +216,12 @@ def handle_amazon(amazon_socket, world_socket):
     # dest_size = len(au_commands.dests)
     print(au_commands)
     for warehouse in au_commands.warehouses:
-        t = threading.Thread(target = execute_gopickups, args = (amazon_socket, world_socket, warehouse, world_seqnum))
+        t = threading.Thread(target = execute_gopickups, args = (amazon_socket, world_socket, warehouse, world_seqnum, ack_set))
         world_seqnum += 1
         t.start()
     for dest in au_commands.dests:
         truck_size = len(dest.leavingtrucks)
-        t = threading.Thread(target = execute_godelivery, args = (amazon_socket, world_socket, dest, world_seqnum, amazon_seqnum))
+        t = threading.Thread(target = execute_godelivery, args = (amazon_socket, world_socket, dest, world_seqnum, amazon_seqnum, ack_set))
         world_seqnum += truck_size
         amazon_seqnum += truck_size
         t.start()

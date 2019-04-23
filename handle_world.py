@@ -73,14 +73,14 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     
 def handle_truckstatus(amazon_socket, world_socket, truckstatus):
     #Reply ack to world
-    return_ack_to_world(world_socket, delivered.seqnum)
+    return_ack_to_world(world_socket, truckstatus.seqnum)
 
     #print query msg
     print(truckstatus)
     
 def handle_error(amazon_socket, world_socket, error):
     #Reply ack to world
-    return_ack_to_world(world_socket, delivered.seqnum)
+    return_ack_to_world(world_socket, error.seqnum)
 
     #print error msg
-    print("ERROR: ",error)
+    print("ERROR: ", error)
