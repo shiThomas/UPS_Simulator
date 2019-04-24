@@ -194,7 +194,15 @@ def recv_msg(s, msg):
                 break
         except IndexError:
             pass
-    whole_message = s.recv(msg_len)
+    whole_message = []
+    
+    while True:
+        data =s.recv(1)
+        whole_message +=data
+        msg_len-=1
+        if msg_len is 0 :
+            break
+
     msg.ParseFromString(whole_message)
     return msg
 
