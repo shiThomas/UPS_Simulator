@@ -30,7 +30,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
         owner = package.upsaccount
         x = package.x
         y = package.y
-
+        desc = package.description
         truckid = -1
         while True:
             print('Selecting truck')
@@ -51,14 +51,15 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
         dbcursor.execute(
             "insert into myapp_package" +
             "(package_id, owner, package_status, " +
-            "destination_x, destination_y, truckid) " +
+            "destination_x, destination_y, truckid, description) " +
             "values ('" +
             str(package_id) + "', '" +
             str(owner) + "', '" +
             str(0) + "', '" +
             str(x) + "', '" +
             str(y) + "', '" +
-            str(truckid) + "')")
+            str(truckid) +"', '" +
+            desc+ "')")
         # print('After insert into package')
 
         # change status of truck to en route to warehouse
