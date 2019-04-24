@@ -46,7 +46,11 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
             truckid = truck[0][0]
             print('truckid is:', truckid)
             break
-            
+
+
+        
+
+        
         # add package_id, owner, package_status x, y to databse
         dbcursor.execute(
             "insert into myapp_package" +
@@ -138,6 +142,13 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
         a_seq+=1
         print(ua_commands)
         send_msg(amazon_socket,ua_commands)
+
+        #update package status
+        dbcursor.execute(
+            "update myapp_package set " +
+            "package_status = " + str(in_transit) + " "
+            "where package_id = '" + str(packageid) + "'")
+
         
         while w_seq not in ack_set:
             # print('Send UGodivery to world again...')
@@ -150,7 +161,7 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
 
         dbcursor.execute(
             "update myapp_truck set " +
-            "truck_status = " + str(delivering) +
+            "truck_status = " + str(delivering) + " "
             "where truck_id = '" + str(truckid) + "'")
 
         dbconn.commit()
