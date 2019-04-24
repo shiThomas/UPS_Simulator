@@ -6,6 +6,8 @@ from proto import ups_amazon_pb2
 
 # Handle gopickups by evaluating commands from amazon
 def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
+    print('Inside execute_gopickups')
+    
     # Reply ack to Amazon
     return_ack_to_amazon(amazon_socket, warehouse.seqnum)
     
@@ -66,9 +68,9 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
     world_commands = world_ups_pb2.UCommands()
     add_pickups(world_commands, truckid, warehouse_id, w_seq)
-    world_commands.simspeed = 1000
+    world_commands.simspeed = 10000
 
-    print('UGopickup commands')
+    print('Send UGopickup to world')
     print(world_commands)
     print('Before receive ack from world')
     while w_seq not in ack_set:
@@ -89,7 +91,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
 #Before go delivery, receive msg from amz
 def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set):
-    print('In execute_godelivery')
+    print('Inside execute_godelivery')
     
     #return ack number to amazon 
     return_ack_to_amazon(amazon_socket, dest.seqnum)
@@ -125,14 +127,12 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
         print('Send UGodelivery to world')
         print(world_commands)
         while w_seq not in ack_set:
-            print('Send UGopickup to world...')
+            print('Send UGodivery to world again...')
             send_msg(world_socket, world_commands)
             time.sleep(sleep_time)
         print('UGodelivery: After receive ack from world')
     
-        # ack_set.remove(w_seq)
-
-        
+        # ack_set.remove(w_seq)        
         w_seq += 1
 
         dbcursor.execute(
@@ -142,20 +142,20 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
 
         
         #return settle msg to amazon
+        print('Send settled to Amazon')
         ua_commands = ups_amazon_pb2.UACommands()
         add_settled(ua_commands,packageid,a_seq)
         a_seq+=1
-
-
+        print(ua_commands)
         send_msg(amazon_socket,ua_commands)
 
-        
         dbconn.commit()
-        print('After commit')
         dbcursor.close()
         dbconn.close()
 
 def handle_completion(amazon_socket, world_socket, completion, a_seq):
+    print('Inside handle_completion()')
+    
     # Reply ack to world
     return_ack_to_world(world_socket, completion.seqnum)
 
@@ -193,6 +193,8 @@ def handle_completion(amazon_socket, world_socket, completion, a_seq):
         for package in packages:
             add_trucks(ua_commands, truckid, wh_x, wh_y, package[0], a_seq)
         a_seq += 1
+        print('Send info to Amazon to notify the truck has arrived at warehouse')
+        print(ua_commands)
         send_msg(amazon_socket, ua_commands)
 
     dbconn.commit()
@@ -200,6 +202,8 @@ def handle_completion(amazon_socket, world_socket, completion, a_seq):
     dbconn.close()
 
 def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
+    print('Inside handle_delivered')
+    
     #Reply ack to world
     return_ack_to_world(world_socket, delivered.seqnum)
 
@@ -216,6 +220,8 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
 
     ua_commands = ups_amazon_pb2.UACommands()
     add_finished(ua_commands, packageid, a_seq)
+    print('Send finished/delivered info to Amazon')
+    print(ua_commands)
     send_msg(amazon_socket, ua_commands)
 
     dbconn.commit()
@@ -223,6 +229,8 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     dbconn.close()
 
 def handle_truckstatus(amazon_socket, world_socket, truckstatus):
+    print('Inside handle_truckstatus()')
+    
     #Reply ack to world
     return_ack_to_world(world_socket, truckstatus.seqnum)
 
@@ -230,6 +238,8 @@ def handle_truckstatus(amazon_socket, world_socket, truckstatus):
     print(truckstatus)
 
 def handle_error(amazon_socket, world_socket, error):
+    print('Inside handle_error')
+    
     #Reply ack to world
     return_ack_to_world(world_socket, error.seqnum)
 

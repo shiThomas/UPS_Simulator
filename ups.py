@@ -14,20 +14,20 @@ from handle_request import *
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
-# WORLD_HOST = 'vcm-8129.vm.duke.edu'
-# WORLD_PORT = 12345
-
-WORLD_HOST = 'vcm-9229.vm.duke.edu'
+WORLD_HOST = 'vcm-8129.vm.duke.edu'
 WORLD_PORT = 12345
 
-# AMAZON_HOST = '10.197.193.1'
-# AMAZON_PORT = 80
+# WORLD_HOST = 'vcm-9229.vm.duke.edu'
+# WORLD_PORT = 12345
+
+AMAZON_HOST = '10.197.193.1'
+AMAZON_PORT = 12321
 
 # AMAZON_HOST = '10.197.40.0'
 # AMAZON_PORT = 7893
 
-AMAZON_HOST = 'vcm-9448.vm.duke.edu'
-AMAZON_PORT = 12345
+# AMAZON_HOST = 'vcm-9448.vm.duke.edu'
+# AMAZON_PORT = 12345
 
 idle = 1
 traveling = 2
@@ -128,9 +128,10 @@ def connect_world(world_socket, worldid, num_truck_init):
         dbconn.commit()
         send_msg(world_socket, u_connect)
         
-    response = recv_msg(world_socket)
+    # response = recv_msg(world_socket)
     u_connected = world_ups_pb2.UConnected()
-    u_connected.ParseFromString(response)
+    u_connected = recv_msg(world_socket, u_connected)
+    # u_connected.ParseFromString(response)
 
     dbcursor.close()
     dbconn.close()
@@ -167,22 +168,21 @@ def connect_amazon():
             continue
 
 # Send with encoded length info
-"""
 def send_msg(s, msg):
     hdr = []
     _EncodeVarint(hdr.append, len(msg.SerializeToString()), None)
-    s.sendall(b"".join(hdr))
-    s.sendall(msg.SerializeToString())
-"""
+    s.send(b"".join(hdr))
+    s.send(msg.SerializeToString())
 
+"""
 def send_msg(skt, obj):
     size = obj.ByteSize()
     skt.send(_VarintBytes(size))
     temp = obj.SerializeToString()
     skt.send(temp)
+"""
 
 # Recv with encoded length info
-"""
 def recv_msg(s):
     var_int_buff = []
     while True:
@@ -195,34 +195,13 @@ def recv_msg(s):
         except IndexError:
             pass
     whole_message = s.recv(msg_len)
-    return whole_message
-"""
-"""
-def recv_msg(s):
-    var_int_buff = []
-    while True:
-        buf = s.recv(1)
-        var_int_buff += buf
-        msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
-        if new_pos != 0:
-            break
-    whole_message = s.recv(msg_len)
-    return whole_message
-"""
-
-def recv_msg(s):
-    x = s.recv(4096)
-    if len(x) == 0:
-        return None
-    print("received non-empty message x. length: ", len(x))
-    msg_len, new_pos = _DecodeVarint32(x, 0)
-    whole_message = x[new_pos:msg_len+new_pos]
-    return whole_message
+    msg.ParseFromString(whole_message)
+    return msg
 
 # Reply ack to Amazon
 def return_ack_to_amazon(amazon_socket, seqnum):
     ua_commands = ups_amazon_pb2.UACommands()
-    ua_commands.ack[:] = [seqnum]  
+    ua_commands.ack[:] = [seqnum]
     send_msg(amazon_socket, ua_commands)
 
 # Reply ack to world(seqnum):
@@ -238,7 +217,9 @@ def handle_world(amazon_socket, world_socket):
     global world_seqnum
     
     # Read from world_socket
-    u_responses = recv_world(world_socket)
+    u_responses = world_ups_pb2.UResponses()
+    u_responses = recv_msg(world_socket, u_responses)
+    # u_responses = recv_world(world_socket)
     print(u_responses)
     completion_size = len(u_responses.completions)
     for completion in u_responses.completions:
@@ -273,7 +254,9 @@ def handle_amazon(amazon_socket, world_socket):
     global world_seqnum
     
     # Read from amazon_socket
-    au_commands = recv_amazon(amazon_socket)
+    # au_commands = recv_amazon(amazon_socket)
+    au_commands = ups_amazon_pb2.AUCommands()
+    au_commands = recv_msg(amazon_socket, au_commands)
     # dest_size = len(au_commands.dests)
     print(au_commands)
     for warehouse in au_commands.warehouses:
@@ -303,13 +286,16 @@ def send_Amazon_worldid(worldid, seqnum):
     print(ua_commands)
     send_msg(amazon_socket, ua_commands)
 
-    response = recv_msg(amazon_socket)
+    """
+    # response = recv_msg(amazon_socket)
     au_commands = ups_amazon_pb2.AUCommands();
-    au_commands.ParseFromString(response)
+    au_commands = recv_msg(amazon_socket, au_commands)
+    # au_commands.ParseFromString(response)
     print('ack:', au_commands)
     for ack in au_commands.ack:
         if ack == seqnum:
             break
+    """
     
 def main():
     global amazon_socket
@@ -335,6 +321,7 @@ def main():
     
     # Conenct to Amazon
     amazon_socket = connect_amazon()
+
     send_Amazon_worldid(worldid, amazon_seqnum)
     amazon_seqnum += 1
     
