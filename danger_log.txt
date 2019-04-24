@@ -55,4 +55,40 @@ to see if there is an avaiable truck.
 
 04/17
 
+We find that there is some strange behaviour when we deliver some
+packages to the destination. After debugging, we find that this is
+beacuse there is a lot of historical entries in our local database
+which is not related to our current program. So, we add some code
+to clean up the database every time we run our program.
 
+04/18
+
+We find that sometimes we tell Amazon one package has already been
+delivered right before we tell Amazon that it has been shipped.
+This is because we only send shipped info after we receive the ack
+of UGodelivery from world. And the ack may be very late.
+
+04/19
+
+We find that the sequence number of different threads will have
+data race, like different threads use the same seqnum. We address
+this by assigning the seqnum in the main thread, and the child
+threads just need to use the assigned seqnum.
+
+04/20
+
+We find that we cannot receive the whole message from one group of
+Amazon. They use Java and we use Python. We don't know if it's
+beacuse the different behaviour of the two languages.
+
+04/21
+
+We find that if the ups account received from Amazon doesn't exist,
+our code will crash. We address this by let the user to register a
+new user with the specified account.
+
+04/22
+
+We find that if the user search the package by a non-existent package
+id, our website will crash. We address this by change the behaviour of
+our backend code to receive an empty result.
