@@ -194,6 +194,8 @@ def recv_msg(s, msg):
                 break
         except IndexError:
             pass
+        except socket.error:
+            pass
     whole_message = []
 
     print('msg_len is:', msg_len)
