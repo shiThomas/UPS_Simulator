@@ -14,17 +14,17 @@ from handle_request import *
 
 # UPS_HOST = socket.gethostname()
 # UPS_PORT = 54321
-WORLD_HOST = 'vcm-8129.vm.duke.edu'
+WORLD_HOST = 'vcm-9320.vm.duke.edu'
 WORLD_PORT = 12345
 
 # WORLD_HOST = 'vcm-9229.vm.duke.edu'
 # WORLD_PORT = 12345
 
-AMAZON_HOST = '10.197.193.1'
-AMAZON_PORT = 34343
+# AMAZON_HOST = '10.197.193.1'
+# AMAZON_PORT = 34343
 
-# AMAZON_HOST = '10.197.40.0'
-# AMAZON_PORT = 7893
+AMAZON_HOST = '10.197.40.0'
+AMAZON_PORT = 7893
 
 # AMAZON_HOST = 'vcm-9448.vm.duke.edu'
 # AMAZON_PORT = 12345
