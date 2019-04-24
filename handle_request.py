@@ -3,6 +3,12 @@ from ups import *
 from build_commands import *
 from build_ups_amazon_commands import *
 from proto import ups_amazon_pb2
+import smtplib, ssl
+
+port = 578  # For SSL
+smtp_server = "smtp.gmail.com"
+sender_email = "cberteam01@gmail.com"  # Enter your address
+
 
 # Handle gopickups by evaluating commands from amazon
 def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
@@ -239,6 +245,17 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     print(ua_commands)
     send_msg(amazon_socket, ua_commands)
 
+    receiver_email = "rhitshiw95@gmail.com"  # Enter receiver address
+    password = "cber12301"
+    message = "Package has been delivered."
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message)
+
+    
     dbconn.commit()
     dbcursor.close()
     dbconn.close()
