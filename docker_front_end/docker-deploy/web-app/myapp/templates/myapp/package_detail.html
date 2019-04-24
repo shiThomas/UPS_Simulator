@@ -1,0 +1,17 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+  <p><strong>Package ID</strong>{{ package.package_id }}</p> <!-- author detail link not yet defined -->
+  <p><strong>Destination</strong> ({{ package.destination_x }}, {{package.destination_y}})</p>
+  <p><strong><a href="{% url 'package_update' package.id %}">Change Package Delivery Destination</a></strong></p>
+  <p><strong>Package Status</strong> {{ package.get_package_status_display }}</p>
+  <p><strong>Package Description</strong>{{ package.description }}</p>
+
+  {% if package.package_status is 2 %}
+<p><strong>Feel free to fill a survey </strong><a href="{% url 'survey_create' %}">Click Here</a></p>
+    <p><strong><a href="{% url 'index' %}">Home Page</a></strong></p>
+  {% else %}
+    <p><strong><a href="{% url 'index' %}">Home Page</a></strong></p>
+  {% endif %}
+{% endblock %}

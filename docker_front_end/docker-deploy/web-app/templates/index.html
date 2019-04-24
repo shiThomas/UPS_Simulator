@@ -1,0 +1,40 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>UPS APP</h1>
+  <h3>Package Info</h3>
+
+
+  <h4><strong>Number of Packages in total:</strong> {{ num_package }} </h4>
+
+
+  <form method='GET' action=''>
+    <input type='text' name='q' placeholder='Input Tracking Number' />
+    <input type='submit' value='Search'>
+  </form>
+
+
+
+  {% if package_id is not None %}
+
+    <h4>Package Information</h4>
+    <h5>Package_id: {{package_id}}</h5>
+    <h5>Destination: ({{dest_x}},{{dest_y}})</h5>
+    {% if status is 0%}
+        <h5>Package_status: Preparing for delivery</h5>
+    {% endif%}
+     {% if status is 1%}
+        <h5>Package_status: In transit</h5>
+    {% endif%}
+    {% if status is 2%}
+        <h5>Package_status: Delivered</h5>
+    {% endif%}
+
+
+
+
+
+  {% endif %}
+
+
+{% endblock %}
