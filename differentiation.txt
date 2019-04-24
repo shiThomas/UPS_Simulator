@@ -1,7 +1,16 @@
 1. Send email when register, delivered
-
+   Our server is able to send emails to user when he/she register a new account.
+   A Delivered message will also be sent to the user when his package is delivered.
+   
 2. able to modify email address, phone number, username
-
+   When A user is logged in, he/she is able to change his/her personal information
+   including email address, phone number and username.
+   
 3. Display Total number of packages available 
+   In the Ups Main page, A number representing total number of packages will be shown
+   on the main page. 
 
 4. Add Survey
+   When the package is delivered, the current user is able to click on a link
+   redirecting him/her to a survey page, and this survey will be saved to the
+   database.
