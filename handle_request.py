@@ -74,7 +74,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
     world_commands = world_ups_pb2.UCommands()
     add_pickups(world_commands, truckid, warehouse_id, w_seq)
-    world_commands.simspeed = 100
+    # world_commands.simspeed = 100
 
     print('Send UGopickup to world')
     print(world_commands)

@@ -20,11 +20,11 @@ from handle_request import *
 WORLD_HOST = 'vcm-9229.vm.duke.edu'
 WORLD_PORT = 12345
 
-AMAZON_HOST = '10.197.193.1'
-AMAZON_PORT = 44555
+# AMAZON_HOST = '10.197.193.1'
+# AMAZON_PORT = 44555
 
-# AMAZON_HOST = '10.197.40.0'
-# AMAZON_PORT = 7893
+AMAZON_HOST = '10.197.40.0'
+AMAZON_PORT = 7893
 
 # AMAZON_HOST = 'vcm-9448.vm.duke.edu'
 # AMAZON_PORT = 12345
@@ -195,15 +195,16 @@ def recv_msg(s, msg):
         except IndexError:
             pass
     whole_message = []
-    
+
+    print('msg_len is:', msg_len)
     while True:
-        data =s.recv(1)
-        whole_message +=data
-        msg_len-=1
+        data = s.recv(msg_len)
+        whole_message.append(data)
+        msg_len -= len(data)
         if msg_len is 0 :
             break
 
-    msg.ParseFromString(whole_message)
+    msg.ParseFromString(b"".join(whole_message))
     return msg
 
 # Reply ack to Amazon
