@@ -1,0 +1,58 @@
+Danger Log for Final Project
+
+04/10
+
+We find that it's much simpler to handle socket programming in
+Python. So, we decide to learn by ourselves how to use Python
+to do socket programming.
+
+04/11
+
+We find that when we send a message to world, the world will
+always return an error message. After some check, we find that
+the format of the google protocal buffer we send to world is
+not appropriate. Then we edit our format and the bug is fixed.
+
+04/12
+
+We find that if we send a message to Amazon, they cannot parse
+it properly. This is because that we add a length info before
+the message, but Amazon doesn't parse this length info.
+
+04/13
+
+We find that if we define a global variable, then every time we
+change this variable in a function, it will arise an error.
+This is because that in Python if we want to use a global variable
+in a function, we have to redeclare it as global before we change
+it. Otherwise it will be seen as a local variable.
+
+04/14
+
+We find that we need use different threads to handle different
+messages from world and Amazon. So, we edit our code to spawn a
+new thread to handle every message from world and Amazon. And
+every thread tries to resend the same message with the same
+sequence number if it doesn't acknowledge number back. The time
+period of resending is set to 5 seconds.
+
+04/15
+
+We find that when we receive several pickup requests from Amazon,
+we will send the same truck to pickup these different packages.
+After careful consideration, we find that this is because there
+is data races between threads when they try to query the database
+for the same idle trucks. We solve this by change "select" to
+"select for update" when we query the database for a truck.
+
+04/16
+
+We find that sometimes the database operation will raise some
+error. This is because we always assume that there will be an
+avaiable truck to use. But it can be that all the trucks is busy.
+We solve this by using a while loop to repeatedly query the database
+to see if there is an avaiable truck.
+
+04/17
+
+

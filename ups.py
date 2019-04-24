@@ -17,7 +17,7 @@ from handle_request import *
 # WORLD_HOST = 'vcm-9320.vm.duke.edu'
 # WORLD_PORT = 12345
 
-WORLD_HOST = 'vcm-8129.vm.duke.edu'
+WORLD_HOST = 'vcm-9229.vm.duke.edu'
 WORLD_PORT = 12345
 
 AMAZON_HOST = '10.197.193.1'
@@ -53,7 +53,7 @@ amazon_socket = None
 
 world_seqnum = 0
 amazon_seqnum = 0
-NUM_TRUCK_INIT = 100
+NUM_TRUCK_INIT = 1000
 
 # To do list:
 # 0. connect to Database.
