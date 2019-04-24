@@ -22,6 +22,6 @@ def add_settled(commands, packageid, seqnum):
 
 def add_finished(commands, packageid, seqnum):
     finished = commands.finished.add()
-    finished.packageid = packageid
+    finished.packageid[:] = packageid
     finished.seqnum = seqnum
     return commands

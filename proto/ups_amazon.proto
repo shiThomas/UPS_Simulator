@@ -58,4 +58,3 @@ repeated DetermineWarehouse warehouses = 1;
 repeated DetermineDst dests = 2;
 repeated int64 ack=4;
 }
-
