@@ -3,11 +3,21 @@ from ups import *
 from build_commands import *
 from build_ups_amazon_commands import *
 from proto import ups_amazon_pb2
-import smtplib, ssl
 
-port = 578  # For SSL
-smtp_server = "smtp.gmail.com"
-sender_email = "cberteam01@gmail.com"  # Enter your address
+import smtplib
+
+
+def send_email(msg):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+
+    server.starttls()
+
+    #log in to the server
+    server.login("cberteam01@gmail.com", "cber12301")
+
+    #Send the mail
+    server.sendmail("cberteam01@gmail.com", "rhitshiw95@gmail.com", msg)
+
 
 
 # Handle gopickups by evaluating commands from amazon
@@ -80,7 +90,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
     world_commands = world_ups_pb2.UCommands()
     add_pickups(world_commands, truckid, warehouse_id, w_seq)
-    # world_commands.simspeed = 100
+    world_commands.simspeed = 100
 
     print('Send UGopickup to world')
     print(world_commands)
@@ -245,16 +255,8 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     print(ua_commands)
     send_msg(amazon_socket, ua_commands)
 
-    receiver_email = "rhitshiw95@gmail.com"  # Enter receiver address
-    password = "cber12301"
-    message = "Package has been delivered."
-
-    context = ssl.create_default_context()
-
-    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-        server.login(sender_email, password)
-        server.sendmail(sender_email, receiver_email, message)
-
+    msg = "Package has been delivered."
+    send_email(msg)
     
     dbconn.commit()
     dbcursor.close()
