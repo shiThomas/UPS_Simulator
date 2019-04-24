@@ -24,8 +24,7 @@ def index(request):
     }
     query = request.GET.get("q")
     if query:
-        packageid_list = package.obje
-        cts.filter(package_id__icontains = query)
+        packageid_list = package.objects.filter(package_id__icontains = query)
         num_package = packageid_list.count()
 
 
