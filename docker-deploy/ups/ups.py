@@ -315,16 +315,16 @@ def main():
     global world_seqnum
     
     # Get world id from user input
-    worldid = input("Enter world id to connect or just hit enter to create a new one: ")
-    if worldid and not worldid.isdigit():
-        print("Error: world id should be digits.")
-        return
+    # worldid = input("Enter world id to connect or just hit enter to create a new one: ")
+    # if worldid and not worldid.isdigit():
+        # print("Error: world id should be digits.")
+        # return
     
     # Connect to World Server
     world_socket = connect_world_server()
 
     # Connect to world
-    worldid, result = connect_world(world_socket, worldid, NUM_TRUCK_INIT)
+    worldid, result = connect_world(world_socket, None, NUM_TRUCK_INIT)
     if result != 'connected!':
         print(result)
         return
