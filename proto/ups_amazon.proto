@@ -11,7 +11,7 @@ required int32 count = 2;
 required int64 packageid = 3;
 required int32 x = 4;
 required int32 y = 5;
-optional string upsaccount = 6;
+optional int32 upsaccount = 6;
 }
 message DetermineWarehouse{
 required int32 whid = 1;

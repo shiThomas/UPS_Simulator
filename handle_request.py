@@ -6,7 +6,7 @@ from proto import ups_amazon_pb2
 
 # Handle gopickups by evaluating commands from amazon
 def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
-    print('Inside execute_gopickups')
+    print('Inside execute_gopickups------------------------------------------')
     
     # Reply ack to Amazon
     return_ack_to_amazon(amazon_socket, warehouse.seqnum)
@@ -38,7 +38,8 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
             dbcursor.execute("select truck_id from myapp_truck where " +
                              "truck_status = " + str(idle) + " " +
                              "or truck_status = " + str(loaded) + " " +
-                             "or truck_status = " + str(delivering))
+                             "or truck_status = " + str(delivering) + " " +
+                             "for update")
             truck = dbcursor.fetchall()
             if len(truck) == 0:
                 continue
@@ -53,12 +54,12 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
             "destination_x, destination_y, truckid) " +
             "values ('" +
             str(package_id) + "', '" +
-            owner + "', '" +
+            str(owner) + "', '" +
             str(0) + "', '" +
             str(x) + "', '" +
             str(y) + "', '" +
             str(truckid) + "')")
-        print('After insert into package')
+        # print('After insert into package')
 
         # change status of truck to en route to warehouse
         dbcursor.execute(
@@ -72,12 +73,12 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
     print('Send UGopickup to world')
     print(world_commands)
-    print('Before receive ack from world')
+    # print('Before receive ack from world')
     while w_seq not in ack_set:
-        print('Send UGopickup to world...')
+        # print('Send UGopickup to world...')
         send_msg(world_socket, world_commands)
         time.sleep(sleep_time)
-    print('UGopickup: After receive ack from world')
+    # print('UGopickup: After receive ack from world')
 
     # ack_set.remove(w_seq)
 
@@ -91,7 +92,7 @@ def execute_gopickups(amazon_socket, world_socket, warehouse, w_seq, ack_set):
 
 #Before go delivery, receive msg from amz
 def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set):
-    print('Inside execute_godelivery')
+    print('Inside execute_godelivery---------------------')
     
     #return ack number to amazon 
     return_ack_to_amazon(amazon_socket, dest.seqnum)
@@ -106,8 +107,8 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
         truckid = currtruck.truckid
         packageid = currtruck.packageid
         
-        #need to add response command
-        print('packageid is:', packageid)
+        # need to add response command
+        # print('packageid is:', packageid)
         dbcursor.execute(
             "select destination_x, destination_y " +
             "from myapp_package " +
@@ -126,11 +127,22 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
 
         print('Send UGodelivery to world')
         print(world_commands)
+
+        send_msg(world_socket, world_commands)
+        
+        #return settle msg to amazon
+        print('Send settled to Amazon')
+        ua_commands = ups_amazon_pb2.UACommands()
+        add_settled(ua_commands,packageid,a_seq)
+        a_seq+=1
+        print(ua_commands)
+        send_msg(amazon_socket,ua_commands)
+        
         while w_seq not in ack_set:
-            print('Send UGodivery to world again...')
+            # print('Send UGodivery to world again...')
             send_msg(world_socket, world_commands)
             time.sleep(sleep_time)
-        print('UGodelivery: After receive ack from world')
+        # print('UGodelivery: After receive ack from world')
     
         # ack_set.remove(w_seq)        
         w_seq += 1
@@ -140,21 +152,12 @@ def execute_godelivery(amazon_socket, world_socket, dest, w_seq, a_seq, ack_set)
             "truck_status = " + str(delivering) +
             "where truck_id = '" + str(truckid) + "'")
 
-        
-        #return settle msg to amazon
-        print('Send settled to Amazon')
-        ua_commands = ups_amazon_pb2.UACommands()
-        add_settled(ua_commands,packageid,a_seq)
-        a_seq+=1
-        print(ua_commands)
-        send_msg(amazon_socket,ua_commands)
-
         dbconn.commit()
         dbcursor.close()
         dbconn.close()
 
 def handle_completion(amazon_socket, world_socket, completion, a_seq):
-    print('Inside handle_completion()')
+    print('Inside handle_completion()--------------------')
     
     # Reply ack to world
     return_ack_to_world(world_socket, completion.seqnum)
@@ -173,7 +176,7 @@ def handle_completion(amazon_socket, world_socket, completion, a_seq):
     # If status is 'idle', then change local database truck status to idle
     # Else, do the following things
 
-    if status is 'idle':
+    if status is 'IDLE':
         dbcursor.execute("update myapp_truck set " +
                      "truck_status = " + str(idle) + " " +
                      "where truck_id = '" + str(truckid) + "'")
@@ -202,7 +205,7 @@ def handle_completion(amazon_socket, world_socket, completion, a_seq):
     dbconn.close()
 
 def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
-    print('Inside handle_delivered')
+    print('Inside handle_delivered--------------------------')
     
     #Reply ack to world
     return_ack_to_world(world_socket, delivered.seqnum)
@@ -215,8 +218,8 @@ def handle_delivered(amazon_socket, world_socket, delivered, a_seq):
     dbconn = connect_db()
     dbcursor = dbconn.cursor()
     dbcursor.execute("update myapp_package set "+
-                     "package_status = "+str(delivered)+" "+
-                     "where package_id ='"+str(packageid)+"'")
+                     "package_status = '" + str(package_delivered) + "' "+
+                     "where package_id = '" + str(packageid) + "'")
 
     ua_commands = ups_amazon_pb2.UACommands()
     add_finished(ua_commands, packageid, a_seq)

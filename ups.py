@@ -21,7 +21,7 @@ WORLD_PORT = 12345
 # WORLD_PORT = 12345
 
 AMAZON_HOST = '10.197.193.1'
-AMAZON_PORT = 12321
+AMAZON_PORT = 34343
 
 # AMAZON_HOST = '10.197.40.0'
 # AMAZON_PORT = 7893
@@ -38,7 +38,7 @@ delivering = 6
 
 prepare_for_delivery = 0
 in_transit = 1
-delivered = 2
+package_delivered = 2
 
 ack_set = set()
 # ack_set.add(x)
@@ -78,10 +78,10 @@ def connect_db():
                 host = 'isilo.db.elephantsql.com',
                 port = '5432')
             # cur = dbconn.cursor()
-            print('Successfully connected to the database')
+            # print('Successfully connected to the database')
             return dbconn
         except:
-            print('Unable to connect to the database')
+            # print('Unable to connect to the database')
             continue
         
 # Connect World
@@ -183,7 +183,7 @@ def send_msg(skt, obj):
 """
 
 # Recv with encoded length info
-def recv_msg(s):
+def recv_msg(s, msg):
     var_int_buff = []
     while True:
         try:
@@ -328,9 +328,9 @@ def main():
     # Repeatedly read from world or amazon
     inputs = [world_socket, amazon_socket]
     while True:
-        print('Before select')
+        # print('Before select')
         infds, outfds, errfds = select.select(inputs, [], [])
-        print('len(infds):', len(infds))
+        # print('len(infds):', len(infds))
         if len(infds) != 0:
             for fds in infds:
                 if fds is world_socket:
@@ -339,7 +339,7 @@ def main():
                 else:
                     print('Received message from Amazon')
                     handle_amazon(amazon_socket, world_socket)
-        print('After select')
+        # print('After select')
 
     world_socket.close()
     amazon_socket.close()
